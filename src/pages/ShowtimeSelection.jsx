@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Calendar, Clock, MapPin, ChevronRight, ArrowLeft, Film, Sparkles } from 'lucide-react';
+import { Calendar, Clock, MapPin, ChevronRight } from 'lucide-react';
 import { movieService } from '../services/movieService';
 import { showtimeService } from '../services/showtimeService';
 import { useBooking } from '../context/BookingContext';
@@ -226,8 +226,10 @@ export const ShowtimeSelection = () => {
         {theaterGroups.length === 0 ? (
           <EmptyState
             icon={Clock}
-            title="No showtimes available for this date"
-            message="No screenings are currently scheduled on the selected date for this movie. Please try selecting a different date above."
+            title="No Nepal showtimes for this date"
+            message={selectedCity
+              ? `No screenings are scheduled in ${selectedCity} for this date. CineWave does not invent local cinema availability — an admin must add confirmed showtimes.`
+              : 'Select a city in the header, or ask an admin to schedule confirmed Nepal showtimes for this title.'}
           />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>

@@ -12,7 +12,7 @@ const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const editableFields = [
   'title', 'tagline', 'poster', 'backdrop', 'genre', 'rating', 'votes', 'duration',
   'durationMinutes', 'releaseDate', 'language', 'formats', 'certificate', 'director',
-  'cast', 'synopsis', 'status', 'featured'
+  'cast', 'synopsis', 'status', 'featured', 'dataNotes', 'posterSource'
 ];
 const isDateOnly = value => {
   if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -46,13 +46,17 @@ const validateMovie = (body, partial = false) => {
   }
   for (const field of ['genre', 'cast', 'formats']) {
     if (body[field] === undefined && partial) continue;
-    if (!Array.isArray(body[field]) || body[field].length > 30 || !body[field].every(
+    const list = body[field] === undefined && !partial ? [] : body[field];
+    if (!Array.isArray(list) || list.length > 30 || !list.every(
       value => typeof value === 'string' && value.trim().length > 0 && value.trim().length <= 80
     )) {
       throw new HttpError(400, `${field} must be a list of up to 30 non-empty strings.`);
     }
-    movie[field] = [...new Set(body[field].map(value => value.trim()))];
+    movie[field] = [...new Set(list.map(value => value.trim()))];
   }
+  if (!partial && (!movie.formats || movie.formats.length === 0)) movie.formats = ['2D'];
+  if (!partial && movie.genre === undefined) movie.genre = [];
+  if (!partial && movie.cast === undefined) movie.cast = [];
   if (body.synopsis !== undefined) {
     if (typeof body.synopsis !== 'string' || body.synopsis.length > 5000) throw new HttpError(400, 'synopsis must be at most 5,000 characters.');
     movie.synopsis = body.synopsis.trim();
@@ -77,9 +81,23 @@ const validateMovie = (body, partial = false) => {
     if (typeof body[field] !== 'string' || body[field].length > 200) throw new HttpError(400, `${field} must be at most 200 characters.`);
     movie[field] = body[field].trim();
   }
+  if (body.dataNotes !== undefined) {
+    if (typeof body.dataNotes !== 'string' || body.dataNotes.length > 2000) {
+      throw new HttpError(400, 'dataNotes must be at most 2,000 characters.');
+    }
+    movie.dataNotes = body.dataNotes.trim();
+  }
+  if (body.posterSource !== undefined) {
+    if (typeof body.posterSource !== 'string' || body.posterSource.length > 500) {
+      throw new HttpError(400, 'posterSource must be at most 500 characters.');
+    }
+    movie.posterSource = body.posterSource.trim();
+  }
   if (body.featured !== undefined) {
-    if (typeof body.featured !== 'boolean') throw new HttpError(400, 'featured must be a boolean.');
-    movie.featured = body.featured;
+    if (typeof body.featured !== 'boolean' && body.featured !== 'true' && body.featured !== 'false') {
+      throw new HttpError(400, 'featured must be a boolean.');
+    }
+    movie.featured = body.featured === true || body.featured === 'true';
   }
   for (const field of editableFields) {
     if (body[field] !== undefined && movie[field] === undefined) throw new HttpError(400, `${field} is invalid.`);
@@ -103,13 +121,18 @@ router.get('/', asyncHandler(async (req, res) => {
       { cast: { $regex: search, $options: 'i' } }
     ];
   }
-  if (typeof req.query.city === 'string' && req.query.city.trim()) {
-    const theaterIds = await Theater.distinct('_id', { city: req.query.city.trim() });
+  // Optional strict city filter: only titles with a scheduled showtime in that city.
+  // Default catalogue browsing omits this so worldwide titles remain visible without
+  // inventing Nepal cinema availability.
+  const city = typeof req.query.city === 'string' ? req.query.city.trim() : '';
+  const localOnly = req.query.localOnly === 'true' || req.query.localOnly === '1';
+  if (city && localOnly) {
+    const theaterIds = await Theater.distinct('_id', { city });
     if (theaterIds.length === 0) return res.json([]);
     const movieIds = await Showtime.distinct('movieId', { theaterId: { $in: theaterIds } });
     filter._id = { $in: movieIds };
   }
-  const movies = await Movie.find(filter).sort({ createdAt: -1 });
+  const movies = await Movie.find(filter).sort({ featured: -1, releaseDate: -1, createdAt: -1 });
   res.json(movies);
 }));
 

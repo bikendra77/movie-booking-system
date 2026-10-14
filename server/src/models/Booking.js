@@ -22,8 +22,7 @@ const bookingSchema = new mongoose.Schema({
   tax: { type: Number, required: true },
   totalAmount: { type: Number, required: true },
   paymentMethod: { type: String, enum: ['pay_at_counter'], default: 'pay_at_counter' },
-  status: { type: String, enum: ['Confirmed', 'Cancelled'], default: 'Confirmed', index: true },
-  qrCodeMock: { type: String, required: true }
+  status: { type: String, enum: ['Confirmed', 'Cancelled'], default: 'Confirmed', index: true }
 }, { timestamps: true });
 
 bookingSchema.virtual('id').get(function getId() {

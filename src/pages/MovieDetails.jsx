@@ -282,6 +282,37 @@ export const MovieDetails = () => {
               </p>
             </div>
 
+            {(movie.director || movie.cast?.length > 0) && (
+              <div style={{ marginBottom: '1.5rem', display: 'grid', gap: '0.75rem' }}>
+                {movie.director && (
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.92rem' }}>
+                    <strong style={{ color: '#fff' }}>Director:</strong> {movie.director}
+                  </p>
+                )}
+                {movie.cast?.length > 0 && (
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.92rem' }}>
+                    <strong style={{ color: '#fff' }}>Cast:</strong> {movie.cast.join(', ')}
+                  </p>
+                )}
+                {movie.releaseDate && (
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.92rem' }}>
+                    <strong style={{ color: '#fff' }}>Release:</strong> {movie.releaseDate} (listed date)
+                  </p>
+                )}
+              </div>
+            )}
+
+            {movie.dataNotes && (
+              <div className="data-notes" role="note">
+                <strong style={{ color: 'var(--accent-gold)' }}>Data notes:</strong> {movie.dataNotes}
+                {movie.posterSource && (
+                  <>
+                    {' '}Poster source: <a href={movie.posterSource} target="_blank" rel="noreferrer" style={{ color: 'var(--accent-blue)' }}>{movie.posterSource}</a>
+                  </>
+                )}
+              </div>
+            )}
+
           </div>
         </div>
       </div>

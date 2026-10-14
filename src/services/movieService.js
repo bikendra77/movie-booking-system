@@ -14,8 +14,8 @@ export const movieService = {
     return apiRequest(`/movies/${encodeURIComponent(id)}`);
   },
 
-  async getFeaturedMovies(city = '') {
-    const movies = await this.getMovies({ city });
+  async getFeaturedMovies() {
+    const movies = await this.getMovies({ status: 'now_showing' });
     const featured = movies.filter(movie => movie.featured);
     return featured.length ? featured : movies.slice(0, 3);
   },

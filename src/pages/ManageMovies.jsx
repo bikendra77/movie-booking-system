@@ -27,12 +27,16 @@ export const ManageMovies = () => {
     rating: 0,
     duration: '',
     releaseDate: getKathmanduDate(),
-    language: 'Nepali',
+    language: 'English',
+    formats: '2D',
     certificate: 'U',
     status: 'now_showing',
+    featured: false,
     director: '',
     cast: '',
-    synopsis: ''
+    synopsis: '',
+    dataNotes: '',
+    posterSource: ''
   };
 
   const [formData, setFormData] = useState(initialFormState);
@@ -72,19 +76,23 @@ export const ManageMovies = () => {
       rating: movie.rating || 0,
       duration: movie.duration || '',
       releaseDate: movie.releaseDate || '',
-      language: movie.language || 'Nepali',
+      language: movie.language || 'English',
+      formats: Array.isArray(movie.formats) ? movie.formats.join(', ') : movie.formats || '2D',
       certificate: movie.certificate || 'U',
       status: movie.status || 'now_showing',
+      featured: !!movie.featured,
       director: movie.director || '',
       cast: Array.isArray(movie.cast) ? movie.cast.join(', ') : movie.cast || '',
-      synopsis: movie.synopsis || ''
+      synopsis: movie.synopsis || '',
+      dataNotes: movie.dataNotes || '',
+      posterSource: movie.posterSource || ''
     });
     setModalOpen(true);
   };
 
   const handleFormChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
   const handleSubmit = async (e) => {
@@ -93,8 +101,11 @@ export const ManageMovies = () => {
     try {
       const payload = {
         ...formData,
+        rating: Number(formData.rating) || 0,
+        featured: !!formData.featured,
         genre: formData.genre.split(',').map(s => s.trim()).filter(Boolean),
-        cast: formData.cast.split(',').map(s => s.trim()).filter(Boolean)
+        cast: formData.cast.split(',').map(s => s.trim()).filter(Boolean),
+        formats: formData.formats.split(',').map(s => s.trim()).filter(Boolean)
       };
       if (editingMovie) {
         await movieService.updateMovie(editingMovie.id, payload);
@@ -314,12 +325,64 @@ export const ManageMovies = () => {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.85rem' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>
-                Duration (e.g. 2h 20m)
+                Duration (e.g. 2h 20m) *
               </label>
               <input
                 type="text"
                 name="duration"
+                required
                 value={formData.duration}
+                onChange={handleFormChange}
+                style={{ width: '100%' }}
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>
+                Release date (YYYY-MM-DD) *
+              </label>
+              <input
+                type="text"
+                name="releaseDate"
+                required
+                value={formData.releaseDate}
+                onChange={handleFormChange}
+                style={{ width: '100%' }}
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>
+                Language *
+              </label>
+              <input
+                type="text"
+                name="language"
+                required
+                value={formData.language}
+                onChange={handleFormChange}
+                style={{ width: '100%' }}
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>
+                Certificate
+              </label>
+              <input
+                type="text"
+                name="certificate"
+                value={formData.certificate}
+                onChange={handleFormChange}
+                style={{ width: '100%' }}
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>
+                Formats (comma separated)
+              </label>
+              <input
+                type="text"
+                name="formats"
+                placeholder="2D, IMAX"
+                value={formData.formats}
                 onChange={handleFormChange}
                 style={{ width: '100%' }}
               />
@@ -339,6 +402,17 @@ export const ManageMovies = () => {
               </select>
             </div>
           </div>
+
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
+            <input
+              type="checkbox"
+              name="featured"
+              checked={!!formData.featured}
+              onChange={handleFormChange}
+              style={{ width: '18px', height: '18px', minHeight: 0 }}
+            />
+            Feature on home hero
+          </label>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div>
@@ -391,6 +465,34 @@ export const ManageMovies = () => {
               rows={3}
               value={formData.synopsis}
               onChange={handleFormChange}
+              style={{ width: '100%' }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>
+              Data notes (label unverified / unavailable fields)
+            </label>
+            <textarea
+              name="dataNotes"
+              rows={2}
+              value={formData.dataNotes}
+              onChange={handleFormChange}
+              placeholder="e.g. Runtime not verified. Nepal showtimes not claimed."
+              style={{ width: '100%' }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>
+              Poster source URL
+            </label>
+            <input
+              type="url"
+              name="posterSource"
+              value={formData.posterSource}
+              onChange={handleFormChange}
+              placeholder="https://en.wikipedia.org/..."
               style={{ width: '100%' }}
             />
           </div>

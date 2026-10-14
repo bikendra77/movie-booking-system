@@ -24,7 +24,7 @@ export const Movies = () => {
       setLoading(true);
       setLoadError('');
       try {
-        const data = await movieService.getMovies({ city: selectedCity });
+        const data = await movieService.getMovies();
         setMovies(data);
       } catch (err) {
         console.error('Failed to load movies:', err);
@@ -34,7 +34,7 @@ export const Movies = () => {
       }
     };
     fetchMovies();
-  }, [reloadKey, selectedCity]);
+  }, [reloadKey]);
 
   // Filter & sort logic
   const filteredMovies = movies
@@ -75,7 +75,7 @@ export const Movies = () => {
           Explore Movies
         </h1>
         <p style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>
-          Browse movies and showtimes available in {selectedCity || 'your selected city'}.
+          Browse the worldwide catalogue. Showtimes in {selectedCity || 'your city'} appear only when a cinema has scheduled them.
         </p>
       </div>
 

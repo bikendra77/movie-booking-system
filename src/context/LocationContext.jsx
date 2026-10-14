@@ -17,8 +17,17 @@ export const LocationProvider = ({ children }) => {
       const theaters = await showtimeService.getTheaters();
       const cityList = [...new Set(theaters.map(theater => theater.city).filter(Boolean))].sort((a, b) => a.localeCompare(b));
       setCities(cityList);
-      if (!selectedCity && cityList.length) setSelectedCity(cityList[0]);
-      if (selectedCity && !cityList.includes(selectedCity)) setSelectedCity('');
+      setSelectedCityState(current => {
+        if (!current && cityList.length) {
+          localStorage.setItem(CITY_KEY, cityList[0]);
+          return cityList[0];
+        }
+        if (current && !cityList.includes(current)) {
+          localStorage.removeItem(CITY_KEY);
+          return '';
+        }
+        return current;
+      });
     } catch (error) {
       setCityError(error.message || 'Cinema locations are unavailable.');
     } finally {

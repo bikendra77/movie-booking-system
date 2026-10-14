@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Calendar, Ticket, ArrowRight, Film } from 'lucide-react';
 import { movieService } from '../services/movieService';
 import { MovieCard } from '../components/MovieCard';
@@ -18,7 +18,6 @@ export const Home = () => {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [reloadKey, setReloadKey] = useState(0);
-  const navigate = useNavigate();
   const { selectedCity } = useLocation();
 
   const genres = ['All', ...new Set(nowShowing.flatMap(movie => movie.genre || []))];
@@ -28,10 +27,11 @@ export const Home = () => {
       try {
         setLoading(true);
         setLoadError('');
+        // Catalogue is worldwide; city only affects showtimes, not inventing local availability.
         const [featured, showing, upcoming, locations] = await Promise.all([
-          movieService.getFeaturedMovies(selectedCity),
-          movieService.getMovies({ status: 'now_showing', city: selectedCity }),
-          movieService.getMovies({ status: 'coming_soon', city: selectedCity }),
+          movieService.getFeaturedMovies(),
+          movieService.getMovies({ status: 'now_showing' }),
+          movieService.getMovies({ status: 'coming_soon' }),
           showtimeService.getLocationStats()
         ]);
         setFeaturedMovies(featured);
@@ -46,7 +46,7 @@ export const Home = () => {
       }
     };
     fetchData();
-  }, [reloadKey, selectedCity]);
+  }, [reloadKey]);
 
   const currentHero = featuredMovies[activeHeroIndex] || featuredMovies[0];
 
@@ -71,121 +71,74 @@ export const Home = () => {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '4rem', paddingBottom: '4rem' }}>
+    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: '4rem', paddingBottom: '4rem' }}>
+
+      {!currentHero && (
+        <section className="container" style={{ padding: '5rem 1.25rem 2rem', textAlign: 'center' }}>
+          <p className="brand-mark">CINEWAVE</p>
+          <h1 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', margin: '0.75rem 0' }}>Nepal’s cinema booking desk</h1>
+          <p style={{ color: 'var(--text-muted)', maxWidth: '36rem', margin: '0 auto 1.5rem' }}>
+            The catalogue is empty. An administrator can add movies and Nepal showtimes from the admin portal.
+          </p>
+          <Link to="/movies" className="btn btn-primary">Browse Movies</Link>
+        </section>
+      )}
       
       {/* 1. HERO SHOWCASE */}
       {currentHero && (
-        <section style={{
-          position: 'relative',
-          minHeight: '75vh',
-          display: 'flex',
-          alignItems: 'center',
-          overflow: 'hidden',
-          backgroundColor: '#070a12'
-        }}>
-          {/* Backdrop Image with Multi-layer Gradient */}
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            backgroundImage: `url(${currentHero.backdrop})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center 20%',
-            opacity: 0.42,
-            transition: 'background-image 0.5s ease-in-out'
-          }} />
+        <section className="hero-cinema">
+          <div
+            className="hero-cinema-bg"
+            style={{ backgroundImage: `url(${currentHero.backdrop})` }}
+          />
+          <div className="hero-cinema-shade" />
 
-          {/* Deep Cinematic Gradients */}
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'linear-gradient(to right, #080b12 0%, rgba(8, 11, 18, 0.85) 45%, rgba(8, 11, 18, 0.4) 100%), linear-gradient(to top, #080b12 0%, transparent 60%)'
-          }} />
-
-          {/* Hero Content */}
-          <div className="container" style={{ position: 'relative', zIndex: 10, padding: '4rem 1.25rem' }}>
-            <div style={{ maxWidth: '680px' }}>
-              
-              {/* Badges strip */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-                <Badge variant="primary">Now showing</Badge>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>• {currentHero.duration}</span>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>• {currentHero.language}</span>
+          <div className="container hero-cinema-content">
+            <div style={{ maxWidth: '640px' }}>
+              <p className="brand-mark anim-fade-up">CINEWAVE</p>
+              <div className="anim-fade-up" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem', flexWrap: 'wrap', animationDelay: '60ms' }}>
+                <Badge variant="primary">Now showing worldwide</Badge>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{currentHero.duration}</span>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{currentHero.language}</span>
               </div>
 
-              {/* Title */}
-              <h1 style={{
-                fontSize: 'clamp(2.4rem, 5vw, 3.8rem)',
-                fontWeight: 800,
-                lineHeight: 1.1,
-                marginBottom: '0.8rem',
-                textShadow: '0 4px 20px rgba(0,0,0,0.8)'
-              }}>
+              <h1 className="hero-title anim-fade-up" style={{ animationDelay: '100ms' }}>
                 {currentHero.title}
               </h1>
 
-              {/* Tagline */}
               {currentHero.tagline && (
-                <p style={{
-                  color: 'var(--primary)',
-                  fontWeight: 600,
-                  fontSize: '1.1rem',
-                  marginBottom: '1rem',
-                  letterSpacing: '0.02em'
-                }}>
+                <p className="hero-tagline anim-fade-up" style={{ animationDelay: '140ms' }}>
                   “{currentHero.tagline}”
                 </p>
               )}
 
-              {/* Synopsis */}
-              <p style={{
-                color: 'var(--text-muted)',
-                fontSize: '1rem',
-                lineHeight: 1.6,
-                marginBottom: '2rem',
-                display: '-webkit-box',
-                WebkitLineClamp: 3,
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden'
-              }}>
+              <p className="hero-synopsis anim-fade-up" style={{ animationDelay: '180ms' }}>
                 {currentHero.synopsis}
               </p>
 
-              {/* CTA Buttons */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                <Link
-                  to={`/booking/showtimes/${currentHero.id}`}
-                  className="btn btn-primary btn-lg"
-                >
-                  <Ticket size={18} /> Choose a Showtime
+              <div className="anim-fade-up" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', animationDelay: '220ms' }}>
+                <Link to={`/booking/showtimes/${currentHero.id}`} className="btn btn-primary btn-lg">
+                  <Ticket size={18} /> Find Showtimes
                 </Link>
-                <Link
-                  to={`/movies/${currentHero.id}`}
-                  className="btn btn-secondary btn-lg"
-                >
+                <Link to={`/movies/${currentHero.id}`} className="btn btn-secondary btn-lg">
                   View Details
                 </Link>
               </div>
 
-              {/* Hero Switcher Indicators */}
               {featuredMovies.length > 1 && (
                 <div style={{ display: 'flex', gap: '0.5rem', marginTop: '2.5rem', alignItems: 'center' }}>
                   {featuredMovies.map((m, idx) => (
                     <button
                       key={m.id}
                       onClick={() => setActiveHeroIndex(idx)}
-                      style={{
-                        height: '6px',
-                        width: activeHeroIndex === idx ? '32px' : '12px',
-                        borderRadius: '3px',
-                        backgroundColor: activeHeroIndex === idx ? 'var(--primary)' : 'rgba(255, 255, 255, 0.25)',
-                        transition: 'all 0.3s ease'
-                      }}
+                      className="hero-dot"
+                      style={{ width: activeHeroIndex === idx ? '32px' : '12px', backgroundColor: activeHeroIndex === idx ? 'var(--primary)' : 'rgba(255, 255, 255, 0.25)' }}
                       title={m.title}
+                      aria-label={`Show ${m.title}`}
                     />
                   ))}
                 </div>
               )}
-
             </div>
           </div>
         </section>
@@ -199,7 +152,7 @@ export const Home = () => {
               <Film color="var(--primary)" /> Now Showing
             </h2>
             <p className="section-subtitle">
-              Movies and screenings available in {selectedCity || 'your selected city'} · {locationStats.cityCount} cities · {locationStats.cinemaCount} cinemas
+              Recent worldwide releases · Nepal showtimes listed only when scheduled · {selectedCity || 'Pick a city'} · {locationStats.cityCount} cities · {locationStats.cinemaCount} cinemas
             </p>
           </div>
           
@@ -259,7 +212,7 @@ export const Home = () => {
               <h2 className="section-title">
                 <Calendar color="#38bdf8" /> Coming Soon
               </h2>
-              <p className="section-subtitle">Upcoming movies available in {selectedCity || 'your selected city'}.</p>
+              <p className="section-subtitle">Upcoming titles in the catalogue. Local Nepal showtimes are added by cinema admins only when confirmed.</p>
             </div>
           </div>
 

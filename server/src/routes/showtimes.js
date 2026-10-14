@@ -47,6 +47,12 @@ router.get('/', asyncHandler(async (req, res) => {
       filter[field] = req.query[field];
     }
   }
+  if (typeof req.query.city === 'string' && req.query.city.trim()) {
+    const theaterIds = await Theater.distinct('_id', { city: req.query.city.trim() });
+    filter.theaterId = filter.theaterId
+      ? (theaterIds.includes(filter.theaterId) ? filter.theaterId : '__none__')
+      : { $in: theaterIds };
+  }
   res.json(await Showtime.find(filter).sort({ date: 1, time: 1 }));
 }));
 

@@ -69,7 +69,7 @@ export const SeatSelection = () => {
     );
   }
 
-  const { seatCount, subtotal } = calculateTotals();
+  const { seatCount, subtotal, bookingFee, tax, totalAmount } = calculateTotals();
 
   const handleProceed = () => {
     if (selectedSeats.length === 0) return;
@@ -77,7 +77,7 @@ export const SeatSelection = () => {
   };
 
   return (
-    <div style={{ paddingBottom: '7rem' }}>
+    <div className="page-enter" style={{ paddingBottom: '8.5rem' }}>
       <div className="container" style={{ padding: '2rem 1.25rem 2rem' }}>
         
         {/* Stepper Header */}
@@ -189,8 +189,21 @@ export const SeatSelection = () => {
           <span>Select available seats. Seat prices are shown below; the total is payable at the cinema counter.</span>
         </div>
 
-        {/* The Seating Chart */}
-        <div className="card" style={{ padding: '2rem 1.5rem', marginBottom: '2rem' }}>
+        <div className="card seat-map-card">
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+            <div>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 700 }}>Select your seats</h3>
+              <p style={{ color: 'var(--text-dim)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+                Base ticket from {formatNPR(showtime.basePrice)} · Prices in NPR · Final total confirmed by the server
+              </p>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Selected · {seatCount}
+              </div>
+              <div style={{ fontSize: '1.35rem', fontWeight: 800 }}>{formatNPR(totalAmount)}</div>
+            </div>
+          </div>
           <SeatGrid
             bookedSeatIds={showtime.bookedSeats || []}
             selectedSeats={selectedSeats}
@@ -201,96 +214,48 @@ export const SeatSelection = () => {
 
       </div>
 
-      {/* Floating Bottom Live Summary Bar */}
-      <div style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: 'rgba(11, 16, 27, 0.95)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        borderTop: '1px solid var(--border-light)',
-        padding: '1rem 0',
-        zIndex: 40,
-        boxShadow: '0 -10px 25px rgba(0, 0, 0, 0.6)'
-      }}>
-        <div className="container" style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '1rem'
-        }}>
-          {/* Left summary details */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+      <div className="seat-summary-bar">
+        <div className="container seat-summary-inner">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
             <div>
               <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Selected Seats ({seatCount})
+                Selected seats ({seatCount})
               </div>
-              <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginTop: '0.2rem', minHeight: '26px' }}>
+              <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginTop: '0.35rem', minHeight: '28px' }}>
                 {selectedSeats.length === 0 ? (
-                  <span style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>None selected yet</span>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>Tap a seat to begin</span>
                 ) : (
                   selectedSeats.map(s => (
-                    <span
-                      key={s.id}
-                      style={{
-                        padding: '0.15rem 0.5rem',
-                        borderRadius: '4px',
-                        backgroundColor: '#10b981',
-                        color: '#fff',
-                        fontWeight: 700,
-                        fontSize: '0.78rem'
-                      }}
-                    >
-                      {s.id}
-                    </span>
+                    <span key={s.id} className="seat-chip anim-pop">{s.id}</span>
                   ))
                 )}
               </div>
             </div>
-
             {selectedSeats.length > 0 && (
-              <button
-                onClick={clearSeats}
-                style={{
-                  fontSize: '0.78rem',
-                  color: 'var(--text-muted)',
-                  textDecoration: 'underline',
-                  cursor: 'pointer'
-                }}
-              >
+              <button type="button" onClick={clearSeats} className="link-muted">
                 Clear all
               </button>
             )}
           </div>
 
-          {/* Right: Subtotal & Proceed button */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Ticket subtotal
-              </div>
-              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: '#fff' }}>
-                {formatNPR(subtotal)}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
+            <div style={{ textAlign: 'right', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+              <div>Tickets {formatNPR(subtotal)} · Fee {formatNPR(bookingFee)} · VAT {formatNPR(tax)}</div>
+              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: '#fff', marginTop: '0.15rem' }}>
+                Est. total {formatNPR(totalAmount)}
               </div>
             </div>
-
             <button
+              type="button"
               onClick={handleProceed}
               disabled={selectedSeats.length === 0}
               className="btn btn-primary btn-lg"
-              style={{
-                boxShadow: selectedSeats.length > 0 ? '0 0 20px rgba(229, 9, 20, 0.5)' : 'none'
-              }}
             >
               <Ticket size={18} /> Proceed to Summary
             </button>
           </div>
         </div>
       </div>
-
     </div>
   );
 };

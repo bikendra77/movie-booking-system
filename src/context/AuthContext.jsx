@@ -32,6 +32,9 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await authService.logout();
+      setError('');
+    } catch (logoutError) {
+      setError(logoutError.message || 'The server could not invalidate this session.');
     } finally {
       setUser(null);
     }

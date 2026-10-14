@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
+import { calculateDisplayTotals } from '../utils/pricing';
 
 const BookingContext = createContext();
 
@@ -19,7 +20,7 @@ export const BookingProvider = ({ children }) => {
 
   const selectShowtime = (showtime) => {
     setSelectedShowtime(showtime);
-    setSelectedSeats([]); // Reset seats when changing showtime
+    setSelectedSeats([]);
   };
 
   const toggleSeat = (seatObj) => {
@@ -27,13 +28,12 @@ export const BookingProvider = ({ children }) => {
       const exists = prev.some(s => s.id === seatObj.id);
       if (exists) {
         return prev.filter(s => s.id !== seatObj.id);
-      } else {
-        if (prev.length >= 8) {
-          window.alert('You can select a maximum of 8 seats per booking.');
-          return prev;
-        }
-        return [...prev, seatObj];
       }
+      if (prev.length >= 8) {
+        window.alert('You can select a maximum of 8 seats per booking.');
+        return prev;
+      }
+      return [...prev, seatObj];
     });
   };
 
@@ -48,22 +48,11 @@ export const BookingProvider = ({ children }) => {
     setContactInfo({ name: '', email: '', phone: '' });
   };
 
-  // Calculations
-  const calculateTotals = () => {
-    const seatCount = selectedSeats.length;
-    const subtotal = selectedSeats.reduce((sum, seat) => sum + (seat.price || 0), 0);
-    const bookingFee = seatCount * 25;
-    const tax = Math.round(subtotal * 0.13);
-    const totalAmount = subtotal + bookingFee + tax;
-
-    return {
-      seatCount,
-      subtotal,
-      bookingFee,
-      tax,
-      totalAmount
-    };
-  };
+  /** Estimate only — the API recalculates the final NPR total. */
+  const calculateTotals = () => calculateDisplayTotals(
+    selectedSeats,
+    selectedShowtime?.basePrice
+  );
 
   const value = {
     selectedMovie,

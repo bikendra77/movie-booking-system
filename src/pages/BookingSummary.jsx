@@ -97,7 +97,7 @@ export const BookingSummary = () => {
   };
 
   return (
-    <div className="container" style={{ padding: '2rem 1.25rem 5rem' }}>
+    <div className="container page-enter" style={{ padding: '2rem 1.25rem 5rem' }}>
       
       {/* Stepper Header */}
       <div style={{

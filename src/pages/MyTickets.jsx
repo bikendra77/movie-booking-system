@@ -64,7 +64,7 @@ export const MyTickets = () => {
       
       {/* Newly Booked Success Notice */}
       {newlyBookedId && (
-        <div style={{
+        <div className="anim-fade-up" style={{
           padding: '1.25rem 1.5rem',
           backgroundColor: 'rgba(16, 185, 129, 0.15)',
           border: '1px solid #10b981',

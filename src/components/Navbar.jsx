@@ -14,6 +14,7 @@ const CityPicker = ({ mobile = false }) => {
         value={selectedCity}
         disabled={loadingCities || cities.length === 0}
         onChange={event => setSelectedCity(event.target.value)}
+        className="city-select-animate"
         style={{ flex: 1, minWidth: 0, minHeight: '48px', padding: '0.65rem 0.8rem', backgroundColor: 'var(--bg-secondary)' }}
       >
         {cities.length === 0 && <option value="">{loadingCities ? 'Loading cities...' : 'No cities available'}</option>}

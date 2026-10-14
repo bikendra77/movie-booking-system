@@ -28,13 +28,13 @@ CineWave is a Nepal-focused movie ticket booking system built with the existing 
 
 2. Create `.env` from `.env.example` (PowerShell: `Copy-Item .env.example .env`) and set `MONGODB_URI`, a random `JWT_SECRET` of at least 32 characters, and the admin seed email/password. Use a unique strong seed password; do not use the example values unchanged.
 
-3. Create or update the initial admin account:
+3. Create or update the initial admin account and worldwide catalogue:
 
    ```bash
    npm run seed
    ```
 
-   This creates or resets only the configured admin account. Existing movie, cinema, showtime, and booking records are left unchanged. Add catalogue and location data from the admin screens after signing in.
+   This creates or resets the configured admin account, upserts verified worldwide movie records (with data notes for unverified fields), and upserts Nepal cinema venues. **No Nepal showtimes are invented** — schedule those in Admin → Showtimes only when confirmed. Set `SEED_CATALOGUE=false` to skip movies/venues. Existing booking and showtime records are left unchanged.
 
 4. Start the API and frontend in separate terminals:
 

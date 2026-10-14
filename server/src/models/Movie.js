@@ -19,7 +19,9 @@ const movieSchema = new mongoose.Schema({
   cast: { type: [String], default: [] },
   synopsis: { type: String, default: '' },
   status: { type: String, enum: ['now_showing', 'coming_soon'], default: 'now_showing' },
-  featured: { type: Boolean, default: false }
+  featured: { type: Boolean, default: false },
+  dataNotes: { type: String, default: '', maxlength: 2000 },
+  posterSource: { type: String, default: '', maxlength: 500 }
 }, { timestamps: true });
 
 movieSchema.set('toJSON', {
