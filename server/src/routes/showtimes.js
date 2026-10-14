@@ -7,6 +7,7 @@ import { Booking } from '../models/Booking.js';
 import { asyncHandler } from '../lib/asyncHandler.js';
 import { HttpError } from '../lib/httpError.js';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
+import { compareShowtimesByNepalTime, isShowtimeInFuture } from '../lib/nepalTime.js';
 
 const router = Router();
 const isDateOnly = value => {
@@ -40,30 +41,50 @@ const validateShowtime = (body, partial = false) => {
   return showtime;
 };
 
-router.get('/', asyncHandler(async (req, res) => {
+const getShowtimeFilter = async (query) => {
   const filter = {};
   for (const field of ['movieId', 'date', 'theaterId']) {
-    if (typeof req.query[field] === 'string' && req.query[field]) {
-      filter[field] = req.query[field];
+    if (typeof query[field] === 'string' && query[field]) {
+      filter[field] = query[field];
     }
   }
-  if (typeof req.query.city === 'string' && req.query.city.trim()) {
-    const theaterIds = await Theater.distinct('_id', { city: req.query.city.trim() });
+  if (typeof query.city === 'string' && query.city.trim()) {
+    const theaterIds = await Theater.distinct('_id', { city: query.city.trim() });
     filter.theaterId = filter.theaterId
       ? (theaterIds.includes(filter.theaterId) ? filter.theaterId : '__none__')
       : { $in: theaterIds };
   }
-  res.json(await Showtime.find(filter).sort({ date: 1, time: 1 }));
+  return filter;
+};
+
+router.get('/manage', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  const filter = await getShowtimeFilter(req.query);
+  const showtimes = await Showtime.find(filter);
+  res.json(showtimes.sort(compareShowtimesByNepalTime));
+}));
+
+router.get('/', asyncHandler(async (req, res) => {
+  const filter = await getShowtimeFilter(req.query);
+  const showtimes = await Showtime.find(filter);
+  res.json(showtimes
+    .filter(showtime => isShowtimeInFuture(showtime))
+    .sort(compareShowtimesByNepalTime));
 }));
 
 router.get('/:id', asyncHandler(async (req, res) => {
   const showtime = await Showtime.findById(req.params.id);
   if (!showtime) throw new HttpError(404, 'Showtime not found.');
+  if (!isShowtimeInFuture(showtime)) {
+    throw new HttpError(410, 'This showtime has already started and is no longer available.');
+  }
   res.json(showtime);
 }));
 
 router.post('/', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
   const { movieId, theaterId, date, time, screenFormat, screenName, basePrice } = validateShowtime(req.body);
+  if (!isShowtimeInFuture({ date, time })) {
+    throw new HttpError(400, 'Showtimes must be scheduled for a future time in Nepal.');
+  }
   const [movie, theater] = await Promise.all([
     Movie.findById(movieId),
     Theater.findById(theaterId)
@@ -91,6 +112,13 @@ router.put('/:id', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
   if (!current) throw new HttpError(404, 'Showtime not found.');
   if (await Booking.exists({ showtimeId: current.id })) {
     throw new HttpError(409, 'A showtime with booking records cannot be edited.');
+  }
+  if ((fields.date !== undefined || fields.time !== undefined)
+    && !isShowtimeInFuture({
+      date: fields.date || current.date,
+      time: fields.time || current.time
+    })) {
+    throw new HttpError(400, 'Showtimes must be scheduled for a future time in Nepal.');
   }
   const movieId = fields.movieId || current.movieId;
   const theaterId = fields.theaterId || current.theaterId;

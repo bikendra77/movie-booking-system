@@ -167,7 +167,7 @@ export const SeatSelection = () => {
             <div style={{ height: '14px', width: '1px', backgroundColor: 'var(--border-subtle)' }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.86rem', fontWeight: 700 }}>
               <Clock size={15} color="#34d399" />
-              <span>{showtime.time}</span>
+              <span>{showtime.time} Nepal time</span>
             </div>
           </div>
         </div>

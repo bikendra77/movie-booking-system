@@ -7,7 +7,7 @@ import { useBooking } from '../context/BookingContext';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { Badge } from '../components/Badge';
 import { EmptyState } from '../components/EmptyState';
-import { getKathmanduDate, getKathmanduDateLabel } from '../utils/dates';
+import { getKathmanduDate, getKathmanduDateLabel, isKathmanduShowtimeInFuture } from '../utils/dates';
 import { formatNPR } from '../utils/currency';
 import { useLocation } from '../context/LocationContext';
 
@@ -41,16 +41,17 @@ export const ShowtimeSelection = () => {
       try {
         setLoading(true);
         setLoadError('');
-        const [mov, allTheaters] = await Promise.all([
+        const [mov, allTheaters, stList] = await Promise.all([
           movieService.getMovieById(movieId),
-          showtimeService.getTheaters()
+          showtimeService.getTheaters(selectedCity ? { city: selectedCity } : {}),
+          showtimeService.getShowtimes({
+            movieId,
+            ...(selectedCity ? { city: selectedCity } : {})
+          })
         ]);
         setMovie(mov);
         selectMovie(mov);
         setTheaters(allTheaters);
-
-        // Fetch showtimes for this movie
-        const stList = await showtimeService.getShowtimes({ movieId });
         setShowtimes(stList);
       } catch (err) {
         console.error('Failed to load showtime data:', err);
@@ -60,7 +61,7 @@ export const ShowtimeSelection = () => {
       }
     };
     loadData();
-  }, [movieId]);
+  }, [movieId, selectedCity]);
 
   const handleSelectShowtime = (showtime) => {
     selectShowtime(showtime);
@@ -94,11 +95,15 @@ export const ShowtimeSelection = () => {
   }
 
   // Filter showtimes for the currently active date
-  const dateFilteredShowtimes = showtimes.filter(st => st.date === selectedDate);
+  const dateFilteredShowtimes = showtimes.filter(st =>
+    st.date === selectedDate && isKathmanduShowtimeInFuture(st)
+  );
 
   // Group showtimes by theater
   const theaterGroups = theaters.filter(theater => !selectedCity || theater.city === selectedCity).map(theater => {
-    const matchingShowtimes = dateFilteredShowtimes.filter(st => st.theaterId === theater.id);
+    const matchingShowtimes = dateFilteredShowtimes.filter(st =>
+      String(st.theaterId) === String(theater.id)
+    );
     return {
       ...theater,
       showtimes: matchingShowtimes

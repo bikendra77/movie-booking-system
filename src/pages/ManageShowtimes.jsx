@@ -38,7 +38,7 @@ export const ManageShowtimes = () => {
       setLoading(true);
       setLoadError('');
       const [stList, movList, thList] = await Promise.all([
-        showtimeService.getShowtimes(),
+        showtimeService.getManagedShowtimes(),
         movieService.getMovies(),
         showtimeService.getTheaters()
       ]);
@@ -199,7 +199,7 @@ export const ManageShowtimes = () => {
                 <tr style={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-dim)' }}>
                   <th style={{ padding: '0.9rem 1.25rem' }}>Movie Title</th>
                   <th style={{ padding: '0.9rem 1rem' }}>Theater & Screen</th>
-                  <th style={{ padding: '0.9rem 1rem' }}>Screening Slot</th>
+                  <th style={{ padding: '0.9rem 1rem' }}>Screening Slot (Nepal time)</th>
                   <th style={{ padding: '0.9rem 1rem' }}>Format</th>
                   <th style={{ padding: '0.9rem 1rem' }}>Base Price</th>
                   <th style={{ padding: '0.9rem 1rem' }}>Occupancy</th>
@@ -312,7 +312,7 @@ export const ManageShowtimes = () => {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>
-                Date (YYYY-MM-DD) *
+                Date (Nepal time, YYYY-MM-DD) *
               </label>
               <input
                 type="date"
@@ -325,7 +325,7 @@ export const ManageShowtimes = () => {
             </div>
             <div>
               <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>
-                Time (e.g. 07:30 PM) *
+                Time (Nepal time, e.g. 07:30 PM) *
               </label>
               <input
                 type="text"

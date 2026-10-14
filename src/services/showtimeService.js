@@ -35,6 +35,15 @@ export const showtimeService = {
     return apiRequest(`/showtimes${suffix}`);
   },
 
+  async getManagedShowtimes(filters = {}) {
+    const query = new URLSearchParams();
+    for (const [key, value] of Object.entries(filters)) {
+      if (value) query.set(key, value);
+    }
+    const suffix = query.size ? `?${query.toString()}` : '';
+    return apiRequest(`/showtimes/manage${suffix}`);
+  },
+
   async getShowtimeById(id) {
     return apiRequest(`/showtimes/${encodeURIComponent(id)}`);
   },

@@ -32,7 +32,7 @@ export const AdminDashboard = () => {
           movieService.getMovies(),
           bookingService.getBookings(),
           authService.getAllUsers(),
-          showtimeService.getShowtimes(),
+          showtimeService.getManagedShowtimes(),
           showtimeService.getLocationStats()
         ]);
 

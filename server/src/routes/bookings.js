@@ -8,6 +8,7 @@ import { HttpError } from '../lib/httpError.js';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
 import { assertBookableSeats } from '../lib/seats.js';
 import { calculateBookingTotals } from '../lib/pricing.js';
+import { isShowtimeInFuture } from '../lib/nepalTime.js';
 
 const router = Router();
 
@@ -66,9 +67,15 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
 
   const initialShowtime = await Showtime.findById(showtimeId.trim());
   if (!initialShowtime) throw new HttpError(404, 'Showtime not found.');
+  if (!isShowtimeInFuture(initialShowtime)) {
+    throw new HttpError(409, 'This showtime has already started and can no longer be booked.');
+  }
   const movie = await Movie.findById(initialShowtime.movieId);
   if (!movie) throw new HttpError(404, 'The movie for this showtime is no longer available.');
 
+  if (!isShowtimeInFuture(initialShowtime)) {
+    throw new HttpError(409, 'This showtime has already started and can no longer be booked.');
+  }
   const showtime = await Showtime.findOneAndUpdate(
     { _id: showtimeId.trim(), bookedSeats: { $nin: seats } },
     { $addToSet: { bookedSeats: { $each: seats } } },
