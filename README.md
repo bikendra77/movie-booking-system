@@ -36,22 +36,21 @@ CineWave is a Nepal-focused movie ticket booking system built with the existing 
 
    This creates or resets the configured admin account, upserts verified worldwide movie records (with data notes for unverified fields), and upserts Nepal cinema venues. **No Nepal showtimes are invented** — schedule those in Admin → Showtimes only when confirmed. Set `SEED_CATALOGUE=false` to skip movies/venues. Existing booking and showtime records are left unchanged.
 
-4. Start the API and frontend in separate terminals:
+4. Start the API and frontend together:
 
    ```bash
-   npm run dev:server
    npm run dev
    ```
 
 5. Open [http://localhost:3000](http://localhost:3000). Sign up as a customer, or use the admin credentials configured in `.env`. The frontend proxies `/api` to `http://localhost:5000`.
 
-If the storefront reports that cinema listings could not load and the Vite terminal shows `ECONNREFUSED` for `/api`, start `npm run dev:server` in a separate terminal. The API requires a configured `.env` and a running MongoDB; check `http://localhost:5000/api/health` for API/database status. Add cinemas, movies, then showtimes through the admin interface.
+If Vite reports `ECONNREFUSED` for `/api`, check the API startup output and confirm `http://localhost:5000/api/health` reports `"database":"connected"`. `npm run dev` starts the API alongside Vite; if you run Vite independently, start the API with `npm run dev:server`. The API requires a configured `.env` and a running MongoDB. Add cinemas, movies, then showtimes through the admin interface.
 
 ## Commands
 
 | Command | Description |
 | --- | --- |
-| `npm run dev` | Start the Vite frontend |
+| `npm run dev` | Start the Vite frontend and API |
 | `npm run dev:server` | Start the API with Node watch mode |
 | `npm run start:server` | Start the API |
 | `npm run seed` | Create or reset the configured admin account |
