@@ -84,11 +84,21 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
   if (!showtime) {
     throw new HttpError(409, 'At least one selected seat was just booked. Please choose different seats.');
   }
+  if (!isShowtimeInFuture(showtime)) {
+    await Showtime.updateOne(
+      { _id: showtimeId.trim() },
+      { $pull: { bookedSeats: { $in: seats } } }
+    );
+    throw new HttpError(409, 'This showtime has already started and can no longer be booked.');
+  }
 
   const { subtotal, bookingFee, tax, totalAmount } = calculateBookingTotals(seats, showtime.basePrice);
   const bookingCode = `CW-${Date.now().toString(36).toUpperCase()}-${randomBytes(2).toString('hex').toUpperCase()}`;
 
   try {
+    if (!isShowtimeInFuture(showtime)) {
+      throw new HttpError(409, 'This showtime has already started and can no longer be booked.');
+    }
     const booking = await Booking.create({
       bookingCode,
       userId: String(req.user.id),

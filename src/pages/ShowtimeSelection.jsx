@@ -22,6 +22,8 @@ export const ShowtimeSelection = () => {
   const [theaters, setTheaters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const [showtimeError, setShowtimeError] = useState('');
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
 
   // Generate the next 5 days for date tabs
   const availableDates = Array.from({ length: 5 }, (_, i) => {
@@ -35,6 +37,11 @@ export const ShowtimeSelection = () => {
   });
 
   const [selectedDate, setSelectedDate] = useState(availableDates[0].dateString);
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const loadData = async () => {
@@ -64,6 +71,12 @@ export const ShowtimeSelection = () => {
   }, [movieId, selectedCity]);
 
   const handleSelectShowtime = (showtime) => {
+    if (!isKathmanduShowtimeInFuture(showtime, new Date())) {
+      setCurrentTime(Date.now());
+      setShowtimeError('This showtime has started. Please select another screening.');
+      return;
+    }
+    setShowtimeError('');
     selectShowtime(showtime);
     navigate(`/booking/seats/${showtime.id}`);
   };
@@ -96,7 +109,7 @@ export const ShowtimeSelection = () => {
 
   // Filter showtimes for the currently active date
   const dateFilteredShowtimes = showtimes.filter(st =>
-    st.date === selectedDate && isKathmanduShowtimeInFuture(st)
+    st.date === selectedDate && isKathmanduShowtimeInFuture(st, new Date(currentTime))
   );
 
   // Group showtimes by theater
@@ -227,6 +240,7 @@ export const ShowtimeSelection = () => {
         <p style={{ color: 'var(--text-dim)', fontSize: '0.82rem', marginTop: '-0.8rem', marginBottom: '1rem' }}>
           {selectedCity ? `Showing cinemas in ${selectedCity}.` : 'Select a city to see nearby cinemas.'}
         </p>
+        {showtimeError && <p role="alert" style={{ color: '#fca5a5', marginBottom: '1rem' }}>{showtimeError}</p>}
 
         {theaterGroups.length === 0 ? (
           <EmptyState

@@ -7,7 +7,7 @@ import { useBooking } from '../context/BookingContext';
 import { SeatGrid } from '../components/SeatGrid';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { formatNPR } from '../utils/currency';
-import { getKathmanduDateLabel } from '../utils/dates';
+import { getKathmanduDateLabel, isKathmanduShowtimeInFuture } from '../utils/dates';
 
 export const SeatSelection = () => {
   const { showtimeId } = useParams();
@@ -27,6 +27,12 @@ export const SeatSelection = () => {
   const [showtime, setShowtime] = useState(null);
   const [movie, setMovie] = useState(null);
   const [loadError, setLoadError] = useState('');
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const fetchShowtimeDetails = async () => {
@@ -70,9 +76,14 @@ export const SeatSelection = () => {
   }
 
   const { seatCount, subtotal, bookingFee, tax, totalAmount } = calculateTotals();
+  const showtimeIsBookable = isKathmanduShowtimeInFuture(showtime, new Date(currentTime));
 
   const handleProceed = () => {
     if (selectedSeats.length === 0) return;
+    if (!isKathmanduShowtimeInFuture(showtime, new Date())) {
+      setCurrentTime(Date.now());
+      return;
+    }
     navigate('/booking/summary');
   };
 
@@ -189,28 +200,36 @@ export const SeatSelection = () => {
           <span>Select available seats. Seat prices are shown below; the total is payable at the cinema counter.</span>
         </div>
 
-        <div className="card seat-map-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
-            <div>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 700 }}>Select your seats</h3>
-              <p style={{ color: 'var(--text-dim)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
-                Base ticket from {formatNPR(showtime.basePrice)} · Prices in NPR · Final total confirmed by the server
-              </p>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Selected · {seatCount}
-              </div>
-              <div style={{ fontSize: '1.35rem', fontWeight: 800 }}>{formatNPR(totalAmount)}</div>
-            </div>
+        {!showtimeIsBookable && (
+          <div role="alert" style={{ color: '#fca5a5', marginBottom: '1rem' }}>
+            This showtime has started and is no longer available. Choose another screening.
           </div>
-          <SeatGrid
-            bookedSeatIds={showtime.bookedSeats || []}
-            selectedSeats={selectedSeats}
-            onToggleSeat={toggleSeat}
-            basePrice={showtime.basePrice}
-          />
-        </div>
+        )}
+
+        {showtimeIsBookable && (
+          <div className="card seat-map-card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 700 }}>Select your seats</h3>
+                <p style={{ color: 'var(--text-dim)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+                  Base ticket from {formatNPR(showtime.basePrice)} · Prices in NPR · Final total confirmed by the server
+                </p>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Selected · {seatCount}
+                </div>
+                <div style={{ fontSize: '1.35rem', fontWeight: 800 }}>{formatNPR(totalAmount)}</div>
+              </div>
+            </div>
+            <SeatGrid
+              bookedSeatIds={showtime.bookedSeats || []}
+              selectedSeats={selectedSeats}
+              onToggleSeat={toggleSeat}
+              basePrice={showtime.basePrice}
+            />
+          </div>
+        )}
 
       </div>
 
@@ -248,7 +267,7 @@ export const SeatSelection = () => {
             <button
               type="button"
               onClick={handleProceed}
-              disabled={selectedSeats.length === 0}
+              disabled={selectedSeats.length === 0 || !showtimeIsBookable}
               className="btn btn-primary btn-lg"
             >
               <Ticket size={18} /> Proceed to Summary

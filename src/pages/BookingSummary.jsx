@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { bookingService } from '../services/bookingService';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { formatNPR } from '../utils/currency';
-import { getKathmanduDateLabel } from '../utils/dates';
+import { getKathmanduDateLabel, isKathmanduShowtimeInFuture } from '../utils/dates';
 
 export const BookingSummary = () => {
   const navigate = useNavigate();
@@ -30,6 +30,12 @@ export const BookingSummary = () => {
 
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (user && !contactInfo.name) {
@@ -56,6 +62,7 @@ export const BookingSummary = () => {
   }
 
   const { seatCount, subtotal, bookingFee, tax, totalAmount } = calculateTotals();
+  const showtimeIsBookable = isKathmanduShowtimeInFuture(selectedShowtime, new Date(currentTime));
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -64,6 +71,11 @@ export const BookingSummary = () => {
 
   const handleConfirmBooking = async (e) => {
     e.preventDefault();
+    if (!isKathmanduShowtimeInFuture(selectedShowtime, new Date())) {
+      setCurrentTime(Date.now());
+      setErrorMsg('This showtime has started and can no longer be booked.');
+      return;
+    }
     if (formData.name.trim().length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       setErrorMsg('Please enter customer name and valid email address.');
       return;
@@ -144,6 +156,11 @@ export const BookingSummary = () => {
           fontSize: '0.9rem'
         }}>
           {errorMsg}
+        </div>
+      )}
+      {!showtimeIsBookable && (
+        <div role="alert" style={{ color: '#fca5a5', marginBottom: '1.5rem' }}>
+          This showtime has started and can no longer be booked.
         </div>
       )}
 
@@ -323,7 +340,7 @@ export const BookingSummary = () => {
           {/* Confirm Button */}
           <button
             onClick={handleConfirmBooking}
-            disabled={submitting}
+            disabled={submitting || !showtimeIsBookable}
             className="btn btn-primary btn-lg"
             style={{ width: '100%', fontSize: '1.05rem' }}
           >
